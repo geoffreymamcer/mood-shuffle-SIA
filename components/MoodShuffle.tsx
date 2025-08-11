@@ -38,22 +38,13 @@ const MoodShuffler: React.FC = () => {
 
   const shuffleStep = (startTime: number): void => {
     const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / totalDuration, 1); // 0 → 1
+    const progress = Math.min(elapsed / totalDuration, 1);
 
     if (progress >= 1) {
-      // End shuffle with final bounce
       setCurrentMood(getRandomMood(true));
-
-      // Enable button immediately
       setIsShuffling(false);
 
-      // Run the bounce animation separately
       Animated.sequence([
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
         Animated.spring(scaleAnim, {
           toValue: 1.2,
           friction: 2,
@@ -67,15 +58,26 @@ const MoodShuffler: React.FC = () => {
           useNativeDriver: true,
         }),
       ]).start();
-
       return;
     }
 
     setCurrentMood(getRandomMood());
 
-    // Smooth speed interpolation
-    const speed = minSpeed + (maxSpeed - minSpeed) * progress;
+    // Make emoji/text do a quick pulse
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.05,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
+    const speed = minSpeed + (maxSpeed - minSpeed) * progress;
     shuffleTimeout.current = setTimeout(() => shuffleStep(startTime), speed);
   };
 
@@ -83,9 +85,10 @@ const MoodShuffler: React.FC = () => {
     if (isShuffling) return;
     setIsShuffling(true);
 
+    // Remove big opacity drop — keep it near 1
     Animated.timing(opacityAnim, {
-      toValue: 0.3,
-      duration: 200,
+      toValue: 1, // was 0.3 before
+      duration: 100,
       useNativeDriver: true,
     }).start();
 
